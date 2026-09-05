@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Language Translation Tool"
+description = "A mobile-friendly translation tool for students that translates text between English, Telugu, Hindi, French, Spanish, and German with copy and text-to-speech controls."
+version = "1.0.0"
+id = "artifacts/language-translation-tool"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22320
+
+[services.development]
+run = "pnpm --filter @workspace/language-translation-tool run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/language-translation-tool", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/language-translation-tool/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22320"
+BASE_PATH = "/"
