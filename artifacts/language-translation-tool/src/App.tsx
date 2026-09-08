@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AlertCircle, ArrowLeftRight, BookOpen, Check, ChevronDown, Clipboard, Languages, Lightbulb, Send, Sparkles, Square, Volume2 } from 'lucide-react';
+import { AlertCircle, ArrowLeftRight, BookOpen, Bot, Check, ChevronDown, Clipboard, Languages, Lightbulb, MessageCircle, Send, Sparkles, Square, Volume2, X } from 'lucide-react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -84,6 +84,117 @@ function StatusMessage({ kind, message }: { kind: StatusKind; message: string })
 
 function LoadingDots() {
   return <span className="loading-dots" aria-label="Translating"><i /><i /><i /></span>;
+}
+
+type ChatMessage = {
+  id: number;
+  role: 'assistant' | 'user';
+  text: string;
+};
+
+const FAQ_SUGGESTIONS = [
+  'How do I translate?',
+  'Which languages are supported?',
+  'Is this tool free?',
+];
+
+function getFaqAnswer(question: string) {
+  const normalized = question.toLowerCase();
+
+  if (normalized.includes('language') || normalized.includes('support') || normalized.includes('telugu') || normalized.includes('hindi') || normalized.includes('french') || normalized.includes('spanish') || normalized.includes('german')) {
+    return 'lingonear supports English, Telugu, Hindi, French, Spanish, and German. Choose a source and target language above, then write your phrase.';
+  }
+  if (normalized.includes('copy') || normalized.includes('clipboard')) {
+    return 'After translating, tap Copy beneath the result. You will see a confirmation when the translation is on your clipboard.';
+  }
+  if (normalized.includes('listen') || normalized.includes('speech') || normalized.includes('sound') || normalized.includes('read aloud')) {
+    return 'After a translation appears, tap Listen to hear it aloud. The available voice depends on your browser and device.';
+  }
+  if (normalized.includes('free') || normalized.includes('cost') || normalized.includes('api') || normalized.includes('pay')) {
+    return 'Yes. lingonear uses a free translation service for short phrases, so no account or API key is needed.';
+  }
+  if (normalized.includes('phone') || normalized.includes('mobile') || normalized.includes('work')) {
+    return 'Yes. The workspace is designed for phones. Open it in your mobile browser and use the large controls as usual.';
+  }
+  if (normalized.includes('translate') || normalized.includes('how') || normalized.includes('start')) {
+    return 'Write your phrase in the “You write” box, choose the source and target languages, and tap Translate phrase. Your result will appear on the right or below.';
+  }
+  return 'I can help with translating, supported languages, Copy, Listen, free use, and mobile access. Try one of the questions below.';
+}
+
+function FAQChatbot() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [question, setQuestion] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: 1, role: 'assistant', text: 'Hi, I’m the lingonear guide. What would you like to know?' },
+  ]);
+  const nextId = useRef(2);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) inputRef.current?.focus();
+  }, [isOpen]);
+
+  const askQuestion = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const answer = getFaqAnswer(trimmed);
+    setMessages((current) => [
+      ...current,
+      { id: nextId.current++, role: 'user', text: trimmed },
+      { id: nextId.current++, role: 'assistant', text: answer },
+    ]);
+    setQuestion('');
+  };
+
+  return (
+    <div className={`faq-chat ${isOpen ? 'is-open' : ''}`}>
+      {isOpen && (
+        <section className="faq-window" role="dialog" aria-modal="false" aria-labelledby="faq-title">
+          <div className="faq-window-head">
+            <div className="faq-agent">
+              <span className="faq-agent-mark"><Bot size={17} aria-hidden="true" /></span>
+              <div>
+                <h2 id="faq-title">lingonear guide</h2>
+                <span>Quick answers about the tool</span>
+              </div>
+            </div>
+            <button className="faq-close" type="button" onClick={() => setIsOpen(false)} aria-label="Close FAQ chatbot">
+              <X size={17} aria-hidden="true" />
+            </button>
+          </div>
+          <div className="faq-messages" aria-live="polite">
+            {messages.map((message) => (
+              <p className={`faq-message ${message.role}`} key={message.id}>{message.text}</p>
+            ))}
+          </div>
+          <div className="faq-suggestions" aria-label="Frequently asked questions">
+            {FAQ_SUGGESTIONS.map((suggestion) => (
+              <button type="button" key={suggestion} onClick={() => askQuestion(suggestion)}>{suggestion}</button>
+            ))}
+          </div>
+          <form className="faq-form" onSubmit={(event) => { event.preventDefault(); askQuestion(question); }}>
+            <label className="sr-only" htmlFor="faq-question">Ask a question</label>
+            <input
+              ref={inputRef}
+              id="faq-question"
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              placeholder="Ask a question…"
+              autoComplete="off"
+            />
+            <button type="submit" aria-label="Send FAQ question" disabled={!question.trim()}>
+              <Send size={15} aria-hidden="true" />
+            </button>
+          </form>
+        </section>
+      )}
+      <button className="faq-launcher" type="button" onClick={() => setIsOpen((open) => !open)} aria-expanded={isOpen} aria-controls="faq-title">
+        {isOpen ? <X size={18} aria-hidden="true" /> : <MessageCircle size={18} aria-hidden="true" />}
+        <span>{isOpen ? 'Close' : 'FAQ help'}</span>
+      </button>
+    </div>
+  );
 }
 
 function Home() {
@@ -342,6 +453,7 @@ function Home() {
           <span>Ctrl / Cmd + Enter to translate</span>
         </footer>
       </div>
+       <FAQChatbot />
     </main>
   );
 }
