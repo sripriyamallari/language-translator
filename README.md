@@ -49,7 +49,7 @@ The main objective of this project is to provide an easy-to-use platform for und
 ## 🔗 Live Demo
 
 Replit Demo:
-https://replit.com/@sripriyamallari/Language-Translation-Tool
+https://b7e5efa1-2dfc-4a98-b7ec-d64e88c5d3be-00-2gni7m4bccqos.pike.replit.dev/
 
 ## 👩‍💻 Developed By
 
